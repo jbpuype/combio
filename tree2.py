@@ -23,8 +23,15 @@ class Tree:
 
     def name(self):
         return self.__name
-    def setlabel(self,lab):
-        self.label = lab
+
+    def setlabel(self, lab):
+        self.__label = lab
+
+    def set_lw(self, new_lw):
+        self.__lw = new_lw
+
+    def set_rw(self, new_rw):
+        self.__rw = new_rw
 
     def __repr__(self):
         out = 'Tree('
@@ -50,6 +57,12 @@ class Tree:
         if self.__rst is not None:
             it = chain(it, self.__rst)
         return it
+
+    def __eq__(self, other):
+        return repr(self) == repr(other)
+
+    def __hash__(self):
+        return hash(repr(self))
 
     @staticmethod
     def loadtxt(file):
@@ -77,28 +90,37 @@ class Tree:
             rght = None
         return Tree(label=level, lt=lft, rt=rght)
 
-allskv=[]
+
+allskv = []
+
+
+def hamDist(x, y):
+    return str(sum([1 for f in zip(x, y) if f[0] != f[1]]))
+
+
 def small_parsimony(tree, alphabet):
-    toppen = []
-    for v in tree:
-        toppen.append(v)
+    toppen = list(tree)
+    numb = max([len(repr(v.label())) for v in tree])-2
     t = 0
-    numb= 10
-    s=[]
+    s = []
     for i in range(numb):
         small_parsimony_impl(tree, alphabet, i)
     for i in toppen:
-        k=''
+        k = ''
         for j in range(numb):
-            kk={}
+            kk = {}
             for a in alphabet:
-                kk[a]=allskv[j][a][i]
+                kk[a] = allskv[j][a][i]
             l = min(kk, key=kk.get)
-            k=k + l
+            k = k + l
         s.append(k)
-    for i,j in zip(tree, s):
+    for i, j in zip(tree, s):
         i.setlabel(j)
-
+    for v in tree:
+        if v.treel() is not None:
+            v.set_lw(hamDist(v.label(), v.treel().label()))
+        if v.treer() is not None:
+            v.set_rw(hamDist(v.label(), v.treer().label()))
     return tree
 
 
@@ -132,23 +154,17 @@ def small_parsimony_impl(tree, alphabet, index):
             for j in alphabet:
                 min_son = min(min_son, s[j][v.treer()] + delta(j, k))
             s[k][v] = min_daughter + min_son
-        for v in done.keys():
-            if not done[v] and done[v.treel()] and done[v.treer()]:
-                d.add(v)
-    out = {}
-    allskv.append(s)
-    for k in alphabet:
-        out[k] = 0
-    for (k, sk) in s.items():
-            out[k] += sum(filter(lambda n: n < math.inf, sk.values()))
-    mini = min(out.items(), key=lambda x: x[1])
-    return mini
+        for w in done.keys():
+            if not done[w] and done[w.treel()] and done[w.treer()]:
+                d.add(w)
+    return {v: min(alphabet, key=lambda k: s[k][v]) for v in tree}
 
 
 def delta(i, j):
     if i != j:
         return 1
     return 0
+
 
 tree = Tree.loadtxt("tree.txt")
 print(small_parsimony(tree, 'ACGT'))
