@@ -144,8 +144,15 @@ def small_parsimony_impl(tree, alphabet, index):
             if not done[v] and done[v.treel()] and done[v.treer()]:
                 d.add(v)
     all_min_vals = {v: all_min(alphabet, key=lambda k: s[k][v]) for v in tree}
-
-    return None
+    min_root=math.inf
+    for k in alphabet:
+        val =s[k][tree]
+        if val <min_root:
+            val=min_root
+    assigned = {}
+    assigned[tree] = min_root
+    assign_values(min_root,tree,all_min_vals,assigned)
+    return assigned
 
 
 def assign_values(parent_assign, tree, min_vals, assigned):
@@ -157,7 +164,7 @@ def assign_values(parent_assign, tree, min_vals, assigned):
     else:
         a = min_vals[tree].pop()
         assigned[tree] = a
-    return assign_values(a, tree.treel(), min_vals, assigned) + assign_values(a, tree.treer(), min_vals, assigned)
+    return {**assign_values(a, tree.treel(), min_vals, assigned), **assign_values(a, tree.treer(), min_vals, assigned)}
 
 
 
