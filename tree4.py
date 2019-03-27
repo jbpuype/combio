@@ -2,22 +2,6 @@ import re
 from itertools import chain
 import math
 
-class SingleIterator:
-
-    def __init__(self, obj):
-        self.__value = obj
-        self.__called = False
-
-    def __next__(self):
-        if not self.__called:
-            self.__called = True
-            return self.__value
-        else:
-            raise StopIteration
-
-    def __iter__(self):
-        return self
-
 class Tree:
     def __init__(self, label=None, lt=None, lw=None, rt=None, rw=None):
         self.__label = label
@@ -61,14 +45,12 @@ class Tree:
     def __next__(self):
         return self
 
-    def iter(self):
-        # it = SingleIterator(self)
-        # it = iter([self])
+    def __iter__(self):
         it = iter([self])
         if self.__lst is not None:
-            it = chain(it, self.__lst.iter())
+            it = chain(it, self.__lst)
         if self.__rst is not None:
-            it = chain(it, self.__rst.iter())
+            it = chain(it, self.__rst)
         return it
 
     def __eq__(self, other):
@@ -85,7 +67,6 @@ class Tree:
             for line in lines:
                 split = line.split("->")
                 nodes.append((int(split[0]), split[1]))
-                # nodes.append((None, split[1]))
             return Tree.build_sub_tree(0, nodes)
 
     @staticmethod
@@ -102,7 +83,7 @@ class Tree:
                 rght = Tree(label=sublst[1][1])
         else:
             rght = None
-        return Tree(label=None, lt=lft, rt=rght)
+        return Tree(label=level, lt=lft, rt=rght)
 
 
 def hamDist(x, y):
@@ -115,14 +96,14 @@ def hamDist(x, y):
 
 def small_parsimony(tree, alphabet):
     from functools import reduce
-    vmap = {v: [] for v in tree.iter()}
+    vmap = {v: [] for v in tree}
     for i in range(10):
         res = small_parsimony_impl(tree, alphabet, i)
         for x in res:
             vmap[x].append(res[x])
-    for v in tree.iter():
+    for v in tree:
         v.set_label(reduce((lambda x, y: x + y), vmap[v]))
-    for v in tree.iter():
+    for v in tree:
         if v.treel() is not None:
             v.set_lw(hamDist(v.label(), v.treel().label()))
         if v.treer() is not None:
@@ -134,7 +115,7 @@ def small_parsimony_impl(tree, alphabet, index):
     alphabet = list(alphabet)
     s = {k: {} for k in alphabet}
     done = {}
-    for v in tree.iter():
+    for v in tree:
         done[v] = False
         if v.treel() is None:
             done[v] = True
@@ -161,7 +142,7 @@ def small_parsimony_impl(tree, alphabet, index):
         for v in done.keys():
             if not done[v] and done[v.treel()] and done[v.treer()]:
                 d.add(v)
-    all_min_vals = {v: all_min(alphabet, key=lambda k: s[k][v]) for v in tree.iter()}
+    all_min_vals = {v: all_min(alphabet, key=lambda k: s[k][v]) for v in tree}
     min_root=math.inf
     for k in alphabet:
         val =s[k][tree]
@@ -197,6 +178,7 @@ def delta(i, j):
     return 0
 
 
-tree = Tree.loadtxt("tree.txt")
+tree = Tree.loadtxt("tree2.txt")
+print(tree)
 print(small_parsimony(tree, 'ACGT'))
 Tree('label')
