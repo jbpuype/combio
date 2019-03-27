@@ -62,8 +62,6 @@ class Tree:
         return self
 
     def iter(self):
-        # it = SingleIterator(self)
-        # it = iter([self])
         it = iter([self])
         if self.__lst is not None:
             it = chain(it, self.__lst.iter())

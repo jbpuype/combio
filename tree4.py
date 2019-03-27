@@ -2,13 +2,29 @@ import re
 from itertools import chain
 import math
 
+class SingleIterator:
+
+    def __init__(self, obj):
+        self.__value = obj
+        self.__called = False
+
+    def __next__(self):
+        if not self.__called:
+            self.__called = True
+            return self.__value
+        else:
+            raise StopIteration
+
+    def __iter__(self):
+        return self
+
 class Tree:
     def __init__(self, label=None, lt=None, lw=None, rt=None, rw=None):
         self.__label = label
-        self.__lst = lt
-        self.__lw = lw
-        self.__rst = rt
-        self.__rw = rw
+        self.lt = lt
+        self.lw = lw
+        self.rt = rt
+        self.rw = rw
 
     def label(self):
         return self.__label
@@ -17,40 +33,40 @@ class Tree:
         self.__label = new_label
 
     def set_lw(self, new_lw):
-        self.__lw = new_lw
+        self.lw = new_lw
 
     def set_rw(self, new_rw):
-        self.__rw = new_rw
+        self.rw = new_rw
 
     def treel(self):
-        return self.__lst
+        return self.lt
 
     def treer(self):
-        return self.__rst
+        return self.rt
 
     def __repr__(self):
         out = 'Tree('
         if self.__label is not None:
             out += repr(self.__label)
-        if self.__lst is not None:
-            out += ', lt=' + repr(self.__lst)
-        if self.__lw is not None:
-            out += ', lw=' + repr(self.__lw)
-        if self.__rst is not None:
-            out += ', rt=' + repr(self.__rst)
-        if self.__rw is not None:
-            out += ', rw=' + repr(self.__rw)
+        if self.lt is not None:
+            out += ', lt=' + repr(self.lt)
+        if self.lw is not None:
+            out += ', lw=' + repr(self.lw)
+        if self.rt is not None:
+            out += ', rt=' + repr(self.rt)
+        if self.rw is not None:
+            out += ', rw=' + repr(self.rw)
         return out + ')'
 
     def __next__(self):
         return self
 
-    def __iter__(self):
+    def iter(self):
         it = iter([self])
-        if self.__lst is not None:
-            it = chain(it, self.__lst)
-        if self.__rst is not None:
-            it = chain(it, self.__rst)
+        if self.lt is not None:
+            it = chain(it, self.lt.iter())
+        if self.rt is not None:
+            it = chain(it, self.rt.iter())
         return it
 
     def __eq__(self, other):
@@ -67,6 +83,7 @@ class Tree:
             for line in lines:
                 split = line.split("->")
                 nodes.append((int(split[0]), split[1]))
+                # nodes.append((None, split[1]))
             return Tree.build_sub_tree(0, nodes)
 
     @staticmethod
@@ -83,7 +100,7 @@ class Tree:
                 rght = Tree(label=sublst[1][1])
         else:
             rght = None
-        return Tree(label=level, lt=lft, rt=rght)
+        return Tree(label=None, lt=lft, rt=rght)
 
 
 def hamDist(x, y):
@@ -91,19 +108,20 @@ def hamDist(x, y):
     for xx, yy in zip(x, y):
         if xx != yy:
             count += 1
-    return str(count)
+    return count
 
 
 def small_parsimony(tree, alphabet):
     from functools import reduce
-    vmap = {v: [] for v in tree}
-    for i in range(10):
+    vmap = {v: [] for v in tree.iter()}
+    numb = max([len(repr(v.label())) for v in tree.iter()])-2
+    for i in range(numb):
         res = small_parsimony_impl(tree, alphabet, i)
         for x in res:
             vmap[x].append(res[x])
-    for v in tree:
+    for v in tree.iter():
         v.set_label(reduce((lambda x, y: x + y), vmap[v]))
-    for v in tree:
+    for v in tree.iter():
         if v.treel() is not None:
             v.set_lw(hamDist(v.label(), v.treel().label()))
         if v.treer() is not None:
@@ -115,7 +133,7 @@ def small_parsimony_impl(tree, alphabet, index):
     alphabet = list(alphabet)
     s = {k: {} for k in alphabet}
     done = {}
-    for v in tree:
+    for v in tree.iter():
         done[v] = False
         if v.treel() is None:
             done[v] = True
@@ -142,7 +160,7 @@ def small_parsimony_impl(tree, alphabet, index):
         for v in done.keys():
             if not done[v] and done[v.treel()] and done[v.treer()]:
                 d.add(v)
-    all_min_vals = {v: all_min(alphabet, key=lambda k: s[k][v]) for v in tree}
+    all_min_vals = {v: all_min(alphabet, key=lambda k: s[k][v]) for v in tree.iter()}
     min_root=math.inf
     for k in alphabet:
         val =s[k][tree]
@@ -178,7 +196,5 @@ def delta(i, j):
     return 0
 
 
-tree = Tree.loadtxt("tree2.txt")
-print(tree)
+tree = Tree.loadtxt("tree.txt")
 print(small_parsimony(tree, 'ACGT'))
-Tree('label')
